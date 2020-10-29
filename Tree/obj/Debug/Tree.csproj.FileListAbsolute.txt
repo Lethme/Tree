@@ -1,0 +1,7 @@
+X:\Projects\Visual Studio\C#\Tree\Tree\bin\Debug\Tree.exe.config
+X:\Projects\Visual Studio\C#\Tree\Tree\bin\Debug\Tree.exe
+X:\Projects\Visual Studio\C#\Tree\Tree\bin\Debug\Tree.pdb
+X:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.csprojAssemblyReference.cache
+X:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.csproj.CoreCompileInputs.cache
+X:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.exe
+X:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.pdb
