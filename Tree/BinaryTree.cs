@@ -40,7 +40,6 @@ namespace Tree
             return Value.CompareTo(OtherNode.Value) == 0;
         }
         public override string ToString() => Value.ToString();
-
         public override int GetHashCode() => Value.GetHashCode();
     }
     public class BinaryTree<T> : IEnumerable<T> where T : IComparable<T>
@@ -49,7 +48,7 @@ namespace Tree
         public List<T> SortedPassList => Pass(PassType.HybridOrder).Select((node) => node.Value).ToList();
         public T MaxValue => Utils.FindMaxValue(SortedPassList);
         public T MinValue => Utils.FindMinValue(SortedPassList);
-        public BinaryTree(T Object) { Root = new BinaryTreeNode<T>(Object); }
+        public BinaryTree(T Object) => Add(Object);
         public BinaryTree(params T[] ObjectSequence) => Add(ObjectSequence);
         public BinaryTree(IEnumerable<T> Collection) => Add(Collection);
         public void Add(T Object) 
@@ -132,7 +131,7 @@ namespace Tree
             }
             else
             {
-                var RemovedItemsList = HybridOrderPass(TreeNode).Select((x) => x.Value).Where((x) => x.CompareTo(TreeNode.Value) != 0).ToList();
+                var RemovedItemsList = HybridOrderPass(TreeNode).Where(x => x != TreeNode).Select(x => x.Value).ToList();
                 if (TreeNode == Root)
                 {
                     Root = null;
@@ -214,14 +213,8 @@ namespace Tree
         }
         public override string ToString() => Root.ToString();
 
-        public IEnumerator<T> GetEnumerator()
-        {
-            return SortedPassList.GetEnumerator();
-        }
+        public IEnumerator<T> GetEnumerator() => SortedPassList.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return SortedPassList.GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => SortedPassList.GetEnumerator();
     }
 }

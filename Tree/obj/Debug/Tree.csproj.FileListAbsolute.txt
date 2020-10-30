@@ -5,3 +5,10 @@ X:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.csprojAssemblyReference.ca
 X:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.csproj.CoreCompileInputs.cache
 X:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.exe
 X:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.pdb
+E:\Projects\Visual Studio\C#\Tree\Tree\bin\Debug\Tree.exe.config
+E:\Projects\Visual Studio\C#\Tree\Tree\bin\Debug\Tree.exe
+E:\Projects\Visual Studio\C#\Tree\Tree\bin\Debug\Tree.pdb
+E:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.csprojAssemblyReference.cache
+E:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.csproj.CoreCompileInputs.cache
+E:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.exe
+E:\Projects\Visual Studio\C#\Tree\Tree\obj\Debug\Tree.pdb
