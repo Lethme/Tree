@@ -11,10 +11,11 @@ namespace Tree
         static void Main(string[] args)
         {
             var Tree = new BinaryTree<int>(6, 5, 3, 8, 1, 4, 9, 15, 17, 13, 7);
-            foreach (var item in Tree) Console.Write($"{item}\n");
-            Console.WriteLine();
-            Tree.RemoveNode(9, DeletionType.DeleteAll, PassType.HybridOrder);
-            foreach (var item in Tree) Console.Write($"{item}\n");
+            foreach (var floor in Tree.FloorList)
+            {
+                foreach (var item in floor) Console.Write($"{item} ");
+                Console.WriteLine();
+            }
         }
     }
 }
