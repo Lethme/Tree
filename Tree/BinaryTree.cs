@@ -19,7 +19,7 @@ namespace Tree
         DeleteAll,
         FirstOnly
     }
-    public sealed class BinaryTreeNode<T> : IComparable<BinaryTreeNode<T>>, IEquatable<BinaryTreeNode<T>> where T : IComparable<T>
+    public class BinaryTreeNode<T> : IComparable<BinaryTreeNode<T>>, IEquatable<BinaryTreeNode<T>> where T : IComparable<T>
     {
         public BinaryTreeNode<T> Parent { get; set; }
         public BinaryTreeNode<T> Left { get; set; }
@@ -45,15 +45,21 @@ namespace Tree
     }
     public class BinaryTree<T> : IEnumerable<T> where T : IComparable<T>
     {
-        public BinaryTreeNode<T> Root { get; private set; }
+        private BinaryTreeNode<T> Root { get; set; }
         public List<T> SortedPassList => Pass(PassType.HybridOrder).Select((node) => node.Value).ToList();
         public List<List<T>> FloorList => FloorPass(Root).Select(list => list.Select(node => node.Value).ToList()).ToList();
+        public int Count => SortedPassList.Count;
+        public int Height => FloorPass(Root).Count;
         public T MaxValue => SortedPassList.Aggregate((a, b) => a.CompareTo(b) > 0 ? a : b);
         public T MinValue => SortedPassList.Aggregate((a, b) => b.CompareTo(a) > 0 ? a : b);
         public BinaryTree(T Object) => Add(Object);
         public BinaryTree(params T[] ObjectSequence) => Add(ObjectSequence);
         public BinaryTree(IEnumerable<T> Collection) => Add(Collection);
-        public BinaryTreeNode<T> this[int index] => Pass(PassType.FloorsOrder)[index];
+        public T this[int index]
+        {
+            get { return Pass(PassType.FloorsOrder)[index].Value; }
+            set { Pass(PassType.FloorsOrder)[index].Value = value; }
+        }
         public void Add(T Object) 
         {
             if (Root == null)
@@ -146,15 +152,19 @@ namespace Tree
                 foreach (var item in RemovedItemsList) Add(item);
             }
         }
-        public List<BinaryTreeNode<T>> FindNodeListByValue(T Value, PassType passOrder = PassType.HybridOrder)
+        private List<BinaryTreeNode<T>> FindNodeListByValue(T Value, PassType passOrder = PassType.HybridOrder)
         {
             return Pass(passOrder).Where(x => x.Value.CompareTo(Value) == 0).ToList();
         }
-        public BinaryTreeNode<T> FindNodeByValue(T Value, PassType passOrder = PassType.HybridOrder)
+        private BinaryTreeNode<T> FindNodeByValue(T Value, PassType passOrder = PassType.HybridOrder)
         {
             var PassList = Pass(passOrder).Where(x => x.Value.CompareTo(Value) == 0).ToList();
             if (PassList.Count != 0) return PassList[0];
             return null;
+        }
+        private BinaryTreeNode<T> FindNodeByIndex(int NodeIndex)
+        {
+            return Pass(Root, PassType.FloorsOrder)[NodeIndex];
         }
         public T GetMaxValue()
         {
@@ -170,7 +180,19 @@ namespace Tree
             for (int i = 1; i < PassList.Count; i++) PassList[i].Value = default;
             return MinValue;
         }
-        public List<BinaryTreeNode<T>> Pass(PassType passOrder = PassType.PreOrder)
+        public List<T> Pass(PassType passOrder = PassType.PreOrder, int NodeIndex = 0)
+        {
+            var Node = FindNodeByIndex(NodeIndex);
+            switch (passOrder)
+            {
+                case PassType.PreOrder: { return PreOrderPass(Node).Select(x => x.Value).ToList(); }
+                case PassType.PostOrder: { return PostOrderPass(Node).Select(x => x.Value).ToList(); }
+                case PassType.HybridOrder: { return HybridOrderPass(Node).Select(x => x.Value).ToList(); }
+                case PassType.FloorsOrder: { return FloorPass(Node).Aggregate((x, y) => x.Union(y).ToList()).Select(x => x.Value).ToList(); }
+                default: throw new ArgumentOutOfRangeException();
+            }
+        }
+        private List<BinaryTreeNode<T>> Pass(PassType passOrder = PassType.PreOrder)
         {
             switch (passOrder)
             {
@@ -181,7 +203,7 @@ namespace Tree
                 default: throw new ArgumentOutOfRangeException();
             }
         }
-        public List<BinaryTreeNode<T>> Pass(BinaryTreeNode<T> Node, PassType passOrder = PassType.PreOrder)
+        private List<BinaryTreeNode<T>> Pass(BinaryTreeNode<T> Node, PassType passOrder = PassType.PreOrder)
         {
             switch (passOrder)
             {
@@ -207,6 +229,8 @@ namespace Tree
             }
             FloorList.Add(CurrentFloor);
             if (FloorList.Last().Any(x => x != null)) FloorPass(null, FloorList);
+            else FloorList.Remove(FloorList.Last());
+
             return FloorList;
         }
         private List<BinaryTreeNode<T>> PostOrderPass(BinaryTreeNode<T> Node, List<BinaryTreeNode<T>> PassList = null)
