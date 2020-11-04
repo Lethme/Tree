@@ -10,15 +10,13 @@ namespace Tree
     {
         static void Main(string[] args)
         {
-            var Tree = new BinaryTree<int>(6, 5, 3, 8, 1, 4, 9, 15, 17, 13, 7);
-
-            foreach (var item in Tree.SortedPassList) Console.WriteLine(item);
-            Console.WriteLine();
-            Console.WriteLine($"{Tree.Count}\n{Tree.Height}\n");
-            Tree.RemoveNode(9, DeletionType.DeleteAll, PassType.FloorsOrder);
-            foreach (var item in Tree.SortedPassList) Console.WriteLine(item);
-            Console.WriteLine();
-            Console.WriteLine($"{Tree.Count}\n{Tree.Height}\n");
+            //var Tree = new BinaryTree<int>(6, 5, 3, 8, 1, 4, 9, 15, 17, 13, 7);
+            //foreach (var item in Tree.Pass(PassType.PostOrder)) Console.Write($"{item} ");
+            //Console.WriteLine();
+            var Tree = new BinaryTree<int>(7, 9, 5, 9, 9, 6);
+            Console.WriteLine($"{Tree}\n");
+            Console.WriteLine($"{Tree.GetMaxValue()}\n");
+            Console.WriteLine($"{Tree}\n");
         }
     }
 }

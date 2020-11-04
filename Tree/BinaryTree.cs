@@ -14,10 +14,10 @@ namespace Tree
         HybridOrder,
         FloorsOrder
     }
-    public enum DeletionType
+    public enum StringFormat
     {
-        DeleteAll,
-        FirstOnly
+        SingleLine,
+        Indented
     }
     public class BinaryTreeNode<T> : IComparable<BinaryTreeNode<T>>, IEquatable<BinaryTreeNode<T>> where T : IComparable<T>
     {
@@ -60,6 +60,7 @@ namespace Tree
             get { return Pass(PassType.FloorsOrder)[index].Value; }
             set { Pass(PassType.FloorsOrder)[index].Value = value; }
         }
+        public bool IsItemExist(T Object) => SortedPassList.Contains(Object);
         public void Add(T Object) 
         {
             if (Root == null)
@@ -108,31 +109,26 @@ namespace Tree
                 }
             }
         }
-        public void RemoveNode(T Value, DeletionType deletionType = DeletionType.DeleteAll, PassType passOrder = PassType.FloorsOrder)
+        public int Remove(T Value, PassType passOrder = PassType.FloorsOrder)
         {
-            switch (deletionType)
+            var RemoveItem = FindNodeByValue(Value, passOrder);
+            if (RemoveItem != null) { RemoveNode(RemoveItem, passOrder); return 1; }
+            return 0;
+        }
+        public int RemoveAll(T Value, PassType passOrder = PassType.FloorsOrder)
+        {
+            BinaryTreeNode<T> RemoveItem;
+            int RemoveCount = 0;
+            while ((RemoveItem = FindNodeByValue(Value, passOrder)) != null)
             {
-                case DeletionType.DeleteAll:
-                    {
-                        BinaryTreeNode<T> RemoveItem;
-                        while ((RemoveItem = FindNodeByValue(Value, passOrder)) != null)
-                        {
-                            RemoveNode(RemoveItem, passOrder);
-                        }
-                        break;
-                    }
-                case DeletionType.FirstOnly:
-                    {
-                        var RemoveItem = FindNodeByValue(Value, passOrder);
-                        if (RemoveItem != null) RemoveNode(RemoveItem, passOrder);
-                        break;
-                    }
-                default: throw new ArgumentOutOfRangeException();
+                RemoveCount++;
+                RemoveNode(RemoveItem, passOrder);
             }
+            return RemoveCount;
         }
         private void RemoveNode(BinaryTreeNode<T> TreeNode, PassType passType = PassType.FloorsOrder)
         {
-            if ((TreeNode.Left ?? TreeNode.Right) == null)
+            if ((TreeNode.Left ?? TreeNode.Right) == null && TreeNode != Root)
             {
                 if (TreeNode == TreeNode.Parent.Left) TreeNode.Parent.Left = null;
                 if (TreeNode == TreeNode.Parent.Right) TreeNode.Parent.Right = null;
@@ -152,6 +148,7 @@ namespace Tree
                 foreach (var item in RemovedItemsList) Add(item);
             }
         }
+        public void Clear() => Root = null;
         private List<BinaryTreeNode<T>> FindNodeListByValue(T Value, PassType passOrder = PassType.HybridOrder)
         {
             return Pass(passOrder).Where(x => x.Value.CompareTo(Value) == 0).ToList();
@@ -164,7 +161,9 @@ namespace Tree
         }
         private BinaryTreeNode<T> FindNodeByIndex(int NodeIndex)
         {
-            return Pass(Root, PassType.FloorsOrder)[NodeIndex];
+            var pass = Pass(Root, PassType.FloorsOrder);
+            if (NodeIndex < pass.Count) return pass[NodeIndex];
+            return null;
         }
         public T GetMaxValue()
         {
@@ -182,13 +181,19 @@ namespace Tree
         }
         public List<T> Pass(PassType passOrder = PassType.PreOrder, int NodeIndex = 0)
         {
+            if (Root == null) return new List<T>();
             var Node = FindNodeByIndex(NodeIndex);
             switch (passOrder)
             {
                 case PassType.PreOrder: { return PreOrderPass(Node).Select(x => x.Value).ToList(); }
                 case PassType.PostOrder: { return PostOrderPass(Node).Select(x => x.Value).ToList(); }
                 case PassType.HybridOrder: { return HybridOrderPass(Node).Select(x => x.Value).ToList(); }
-                case PassType.FloorsOrder: { return FloorPass(Node).Aggregate((x, y) => x.Union(y).ToList()).Select(x => x.Value).ToList(); }
+                case PassType.FloorsOrder: 
+                    {
+                        var floorList = FloorPass(Node);
+                        if (floorList.Count != 0) return FloorPass(Node).Aggregate((x, y) => x.Concat(y).ToList()).Select(x => x.Value).ToList();
+                        else return new List<T>();
+                    }
                 default: throw new ArgumentOutOfRangeException();
             }
         }
@@ -199,7 +204,12 @@ namespace Tree
                 case PassType.PreOrder: { return PreOrderPass(Root); }
                 case PassType.PostOrder: { return PostOrderPass(Root); }
                 case PassType.HybridOrder: { return HybridOrderPass(Root); }
-                case PassType.FloorsOrder: { return FloorPass(Root).Aggregate((x, y) => x.Union(y).ToList()); }
+                case PassType.FloorsOrder: 
+                    {
+                        var floorList = FloorPass(Root);
+                        if (floorList.Count != 0) return FloorPass(Root).Aggregate((x, y) => x.Concat(y).ToList());
+                        else return new List<BinaryTreeNode<T>>();
+                    }
                 default: throw new ArgumentOutOfRangeException();
             }
         }
@@ -210,7 +220,12 @@ namespace Tree
                 case PassType.PreOrder: { return PreOrderPass(Node); }
                 case PassType.PostOrder: { return PostOrderPass(Node); }
                 case PassType.HybridOrder: { return HybridOrderPass(Node); }
-                case PassType.FloorsOrder: { return FloorPass(Node).Aggregate((x, y) => x.Union(y).ToList()); }
+                case PassType.FloorsOrder:
+                    {
+                        var floorList = FloorPass(Node);
+                        if (floorList.Count != 0) return FloorPass(Node).Aggregate((x, y) => x.Concat(y).ToList());
+                        else return new List<BinaryTreeNode<T>>();
+                    }
                 default: throw new ArgumentOutOfRangeException();
             }
         }
@@ -219,6 +234,7 @@ namespace Tree
             if (FloorList == null)
             {
                 FloorList = new List<List<BinaryTreeNode<T>>>();
+                if (Root == null) return FloorList;
                 FloorList.Add(new List<BinaryTreeNode<T>>() { Node });
             }
             var CurrentFloor = new List<BinaryTreeNode<T>>();
@@ -266,7 +282,26 @@ namespace Tree
             }
             return PassList;
         }
-        public override string ToString() => Root.ToString();
+        public string ToString(StringFormat stringFormat = StringFormat.SingleLine)
+        {
+            var tempStr = String.Empty;
+            var tempList = FloorPass(Root);
+            for (var i = tempList.Count - 1; i >= 0; i--)
+            {
+                for (var j = tempList[i].Count - 1; j >= 0; j--)
+                {
+                    if (i == 0) tempStr = tempStr.Insert(0, $"{tempList[i][j].Value}:Root ");
+                    else
+                    {
+                        if (tempList[i][j].Parent.Left == tempList[i][j]) tempStr = tempStr.Insert(0, $"{tempList[i][j].Value}:{tempList[i][j].Parent.Value}L ");
+                        if (tempList[i][j].Parent.Right == tempList[i][j]) tempStr = tempStr.Insert(0, $"{tempList[i][j].Value}:{tempList[i][j].Parent.Value}R ");
+                    }
+                }
+                if (stringFormat == StringFormat.Indented && i != 0) tempStr = tempStr.Insert(0, Environment.NewLine);
+            }
+            return tempStr.Trim(' ');
+        }
+        public override string ToString() => ToString(StringFormat.Indented);
 
         public IEnumerator<T> GetEnumerator() => SortedPassList.GetEnumerator();
 
