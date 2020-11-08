@@ -7,61 +7,212 @@ using System.Threading.Tasks;
 
 namespace Tree
 {
+    #region Enums
+    /// <summary>
+    /// Tree pass type
+    /// </summary>
     public enum PassType
     {
+        /// <summary>
+        /// Root - left leaf - right leaf
+        /// </summary>
         PreOrder,
+        /// <summary>
+        /// Left leaf - right leaf - root
+        /// </summary>
         PostOrder,
+        /// <summary>
+        /// Left leaf - root - right leaf
+        /// </summary>
         HybridOrder,
+        /// <summary>
+        /// Order by tree floors (root is zero floor, his left and right leafs are first etc)
+        /// </summary>
         FloorsOrder
     }
+    /// <summary>
+    /// Output string format
+    /// </summary>
     public enum StringFormat
     {
+        /// <summary>
+        /// Line without any indents
+        /// </summary>
         SingleLine,
+        /// <summary>
+        /// Line with indents
+        /// </summary>
         Indented
     }
+    #endregion
+    #region Exceptions
+    /// <summary>
+    /// <para>Object duplication exception</para>
+    /// <para>Appears while adding object which already exist in a tree</para>
+    /// </summary>
+    /// <typeparam name="T">As tree can contain a different types of objects</typeparam>
+    [Serializable]
+    public class ObjectDuplicationException<T> : Exception
+    {
+        public ObjectDuplicationException(T Object) : base ($"Object '{Object}' is already exist in current tree!") {  }
+        public ObjectDuplicationException(string message) : base(message) {  }
+        public ObjectDuplicationException(string message, Exception innerException) : base(message, innerException) {  }
+        public ObjectDuplicationException() {  }
+        protected ObjectDuplicationException(System.Runtime.Serialization.SerializationInfo serializationInfo, System.Runtime.Serialization.StreamingContext streamingContext)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    #endregion
+    /// <summary>
+    /// Binary tree leaf class
+    /// </summary>
+    /// <typeparam name="T">Type of leaf value</typeparam>
     public class BinaryTreeNode<T> : IComparable<BinaryTreeNode<T>>, IEquatable<BinaryTreeNode<T>> where T : IComparable<T>
     {
+        #region Properties
+        /// <summary>
+        /// Link to a parent leaf node
+        /// </summary>
         public BinaryTreeNode<T> Parent { get; set; }
+        /// <summary>
+        /// Link to a left leaf node
+        /// </summary>
         public BinaryTreeNode<T> Left { get; set; }
+        /// <summary>
+        /// Link to a right leaf node
+        /// </summary>
         public BinaryTreeNode<T> Right { get; set; }
+        /// <summary>
+        /// Leaf value
+        /// </summary>
         public T Value { get; set; }
+        #endregion
+        #region Constructors
+        /// <summary>
+        /// Tree node constructor
+        /// </summary>
+        /// <param name="Object">Leaf value to be set</param>
         public BinaryTreeNode(T Object)
         {
             if (Object == null) throw new NullReferenceException();
             Value = Object;
         }
+        #endregion
+        #region Service
+        /// <summary>
+        /// Leafs comparator
+        /// </summary>
+        /// <param name="obj">Another leaf</param>
+        /// <returns>Difference between two leafs</returns>
         public int CompareTo(BinaryTreeNode<T> obj)
         {
             if (obj == null) throw new NullReferenceException();
             return Value.CompareTo(obj.Value);
         }
+        /// <summary>
+        /// Leafs equation
+        /// </summary>
+        /// <param name="OtherNode">Another leaf</param>
+        /// <returns><c>true</c> if leafs values are the same and <c>false</c> otherwise</returns>
         public bool Equals(BinaryTreeNode<T> OtherNode)
         {
             if (OtherNode == null) throw new NullReferenceException();
             return Value.CompareTo(OtherNode.Value) == 0;
         }
+        /// <summary>
+        /// Leaf to string converter
+        /// </summary>
+        /// <returns>Leaf value as string value</returns>
         public override string ToString() => Value.ToString();
+        /// <summary>
+        /// Leaf hash converter
+        /// </summary>
+        /// <returns>Leaf value hash</returns>
         public override int GetHashCode() => Value.GetHashCode();
+        #endregion
     }
+    /// <summary>
+    /// Binary tree class
+    /// </summary>
+    /// <typeparam name="T">Type of tree leafs values</typeparam>
     public class BinaryTree<T> : IEnumerable<T> where T : IComparable<T>
     {
+        #region Properties
+        /// <summary>
+        /// Link to tree root
+        /// </summary>
         private BinaryTreeNode<T> Root { get; set; }
-        public List<T> SortedPassList => Pass(PassType.HybridOrder).Select((node) => node.Value).ToList();
+        /// <summary>
+        /// Sorted list of tree leafs values
+        /// </summary>
+        public List<T> SortedPassList => Pass(PassType.HybridOrder, default);
+        /// <summary>
+        /// List of tree leafs value by tree floors
+        /// </summary>
         public List<List<T>> FloorList => FloorPass(Root).Select(list => list.Select(node => node.Value).ToList()).ToList();
+        /// <summary>
+        /// Total tree leafs count
+        /// </summary>
         public int Count => SortedPassList.Count;
+        /// <summary>
+        /// Total tree height
+        /// </summary>
         public int Height => FloorPass(Root).Count;
+        /// <summary>
+        /// Maximal value of tree leafs values
+        /// </summary>
         public T MaxValue => SortedPassList.Aggregate((a, b) => a.CompareTo(b) > 0 ? a : b);
+        /// <summary>
+        /// Minimal value of tree leafs values
+        /// </summary>
         public T MinValue => SortedPassList.Aggregate((a, b) => b.CompareTo(a) > 0 ? a : b);
-        public BinaryTree(T Object) => Add(Object);
-        public BinaryTree(params T[] ObjectSequence) => Add(ObjectSequence);
-        public BinaryTree(IEnumerable<T> Collection) => Add(Collection);
+        /// <summary>
+        /// Tree indexer
+        /// </summary>
+        /// <param name="index">Leaf index</param>
+        /// <returns>Leaf value</returns>
         public T this[int index]
         {
             get { return Pass(PassType.FloorsOrder)[index].Value; }
             set { Pass(PassType.FloorsOrder)[index].Value = value; }
         }
-        public bool IsItemExist(T Object) => SortedPassList.Contains(Object);
-        public void Add(T Object) 
+        #endregion
+        #region Constructors
+        /// <summary>
+        /// Binary tree constructor
+        /// </summary>
+        /// <param name="ObjectSequence">Sequence of values</param>
+        public BinaryTree(params T[] ObjectSequence) => Add(ObjectSequence);
+        /// <summary>
+        /// Binary tree constructor
+        /// </summary>
+        /// <param name="Collection">Any enumerable collection</param>
+        public BinaryTree(IEnumerable<T> Collection) => Add(Collection);
+        #endregion
+        #region Editors
+        /// <summary>
+        /// Allows to add new leafs by sequence of values
+        /// </summary>
+        /// <param name="ObjectSequence">Sequence of values</param>
+        public void Add(params T[] ObjectSequence)
+        {
+            foreach (var obj in ObjectSequence) Add(obj);
+        }
+        /// <summary>
+        /// Allows to add new leafs by any enumerable collection
+        /// </summary>
+        /// <param name="Collection">Any enumerable collection</param>
+        public void Add(IEnumerable<T> Collection)
+        {
+            if (Collection == null) throw new NullReferenceException();
+            foreach (var obj in Collection) Add(obj);
+        }
+        /// <summary>
+        /// Allows to add new leaf
+        /// </summary>
+        /// <param name="Object">Leaf value</param>
+        private void Add(T Object)
         {
             if (Root == null)
             {
@@ -69,18 +220,18 @@ namespace Tree
             }
             else
             {
+                if (IsItemExist(Object)) throw new ObjectDuplicationException<T>(Object);
                 Add(new BinaryTreeNode<T>(Object), Root);
             }
         }
-        public void Add(params T[] ObjectSequence)
-        {
-            foreach (var obj in ObjectSequence) Add(obj);
-        }
-        public void Add(IEnumerable<T> Collection)
-        {
-            if (Collection == null) throw new NullReferenceException();
-            foreach (var obj in Collection) Add(obj);
-        }
+        /// <summary>
+        /// Private tree node add method
+        /// </summary>
+        /// <param name="TreeNode">New leaf to add</param>
+        /// <param name="AddLink">
+        /// <para>Link of basic leaf to add new one</para>
+        /// <para>Adding algorithm should always start from Root</para>
+        /// </param>
         private void Add(BinaryTreeNode<T> TreeNode, BinaryTreeNode<T> AddLink)
         {
             if (TreeNode == null) throw new NullReferenceException();
@@ -109,12 +260,24 @@ namespace Tree
                 }
             }
         }
+        /// <summary>
+        /// Removes first found leaf
+        /// </summary>
+        /// <param name="Value">Value to search leafs</param>
+        /// <param name="passOrder">Order of tree pass</param>
+        /// <returns>Total removes leafs count</returns>
         public int Remove(T Value, PassType passOrder = PassType.FloorsOrder)
         {
             var RemoveItem = FindNodeByValue(Value, passOrder);
             if (RemoveItem != null) { RemoveNode(RemoveItem, passOrder); return 1; }
             return 0;
         }
+        /// <summary>
+        /// Removes all found leafs
+        /// </summary>
+        /// <param name="Value">Value to search leafs</param>
+        /// <param name="passOrder">Order of tree pass</param>
+        /// <returns>Total removes leafs count</returns>
         public int RemoveAll(T Value, PassType passOrder = PassType.FloorsOrder)
         {
             BinaryTreeNode<T> RemoveItem;
@@ -126,6 +289,11 @@ namespace Tree
             }
             return RemoveCount;
         }
+        /// <summary>
+        /// Removes node from tree
+        /// </summary>
+        /// <param name="TreeNode">Tree node</param>
+        /// <param name="passType">Order of tree pass</param>
         private void RemoveNode(BinaryTreeNode<T> TreeNode, PassType passType = PassType.FloorsOrder)
         {
             if ((TreeNode.Left ?? TreeNode.Right) == null && TreeNode != Root)
@@ -148,37 +316,53 @@ namespace Tree
                 foreach (var item in RemovedItemsList) Add(item);
             }
         }
+        /// <summary>
+        /// Clear tree
+        /// </summary>
         public void Clear() => Root = null;
+        #endregion
+        #region Search
+        /// <summary>
+        /// Find all nodes by their value
+        /// </summary>
+        /// <param name="Value">Value to search</param>
+        /// <param name="passOrder">Order of tree pass</param>
+        /// <returns>List of tree nodes</returns>
         private List<BinaryTreeNode<T>> FindNodeListByValue(T Value, PassType passOrder = PassType.HybridOrder)
         {
             return Pass(passOrder).Where(x => x.Value.CompareTo(Value) == 0).ToList();
         }
+        /// <summary>
+        /// Find first node by value
+        /// </summary>
+        /// <param name="Value">Value to search</param>
+        /// <param name="passOrder">Order of tree pass</param>
+        /// <returns>Node link</returns>
         private BinaryTreeNode<T> FindNodeByValue(T Value, PassType passOrder = PassType.HybridOrder)
         {
-            var PassList = Pass(passOrder).Where(x => x.Value.CompareTo(Value) == 0).ToList();
+            var PassList = FindNodeListByValue(Value, passOrder);
             if (PassList.Count != 0) return PassList[0];
             return null;
         }
+        /// <summary>
+        /// Find node by its index in tree
+        /// </summary>
+        /// <param name="NodeIndex">Index</param>
+        /// <returns>Node link</returns>
         private BinaryTreeNode<T> FindNodeByIndex(int NodeIndex)
         {
             var pass = Pass(Root, PassType.FloorsOrder);
             if (NodeIndex < pass.Count) return pass[NodeIndex];
             return null;
         }
-        public T GetMaxValue()
-        {
-            var MaxValue = this.MaxValue;
-            var PassList = Pass(PassType.PostOrder).Where((x) => x.Value.CompareTo(MaxValue) == 0).ToList();
-            for (int i = 1; i < PassList.Count; i++) PassList[i].Value = default;
-            return MaxValue;
-        }
-        public T GetMinValue()
-        {
-            var MinValue = this.MinValue;
-            var PassList = Pass(PassType.PostOrder).Where((x) => x.Value.CompareTo(MinValue) == 0).ToList();
-            for (int i = 1; i < PassList.Count; i++) PassList[i].Value = default;
-            return MinValue;
-        }
+        #endregion
+        #region Pass
+        /// <summary>
+        /// Get a list of tree leaf values with a specified pass order
+        /// </summary>
+        /// <param name="passOrder">Pass order type</param>
+        /// <param name="NodeIndex">Start leaf index</param>
+        /// <returns>List of tree leaf values</returns>
         public List<T> Pass(PassType passOrder = PassType.PreOrder, int NodeIndex = 0)
         {
             if (Root == null) return new List<T>();
@@ -197,6 +381,11 @@ namespace Tree
                 default: throw new ArgumentOutOfRangeException();
             }
         }
+        /// <summary>
+        /// Privare pass method
+        /// </summary>
+        /// <param name="passOrder">Pass order type</param>
+        /// <returns>List of tree leafs</returns>
         private List<BinaryTreeNode<T>> Pass(PassType passOrder = PassType.PreOrder)
         {
             switch (passOrder)
@@ -213,6 +402,12 @@ namespace Tree
                 default: throw new ArgumentOutOfRangeException();
             }
         }
+        /// <summary>
+        /// Private pass method
+        /// </summary>
+        /// <param name="Node">Leaf to start pass from</param>
+        /// <param name="passOrder">Pass order type</param>
+        /// <returns>List of tree leafs</returns>
         private List<BinaryTreeNode<T>> Pass(BinaryTreeNode<T> Node, PassType passOrder = PassType.PreOrder)
         {
             switch (passOrder)
@@ -229,6 +424,15 @@ namespace Tree
                 default: throw new ArgumentOutOfRangeException();
             }
         }
+        /// <summary>
+        /// Pass tree by its floors
+        /// </summary>
+        /// <param name="Node">Leaf to start pass from</param>
+        /// <param name="FloorList">
+        /// <para>Final list of tree floors</para>
+        /// <para>Should be null on method call!</para>
+        /// </param>
+        /// <returns>List of tree leafs ordered by floors</returns>
         private List<List<BinaryTreeNode<T>>> FloorPass(BinaryTreeNode<T> Node, List<List<BinaryTreeNode<T>>> FloorList = null)
         {
             if (FloorList == null)
@@ -249,6 +453,15 @@ namespace Tree
 
             return FloorList;
         }
+        /// <summary>
+        /// Post order type pass method
+        /// </summary>
+        /// <param name="Node">Leaf to start pass from</param>
+        /// <param name="PassList">
+        /// <para>Final list of tree leafs</para>
+        /// <para>Should be null on method call</para>
+        /// </param>
+        /// <returns>List of tree leafs</returns>
         private List<BinaryTreeNode<T>> PostOrderPass(BinaryTreeNode<T> Node, List<BinaryTreeNode<T>> PassList = null)
         {
             if (PassList == null) PassList = new List<BinaryTreeNode<T>>();
@@ -260,6 +473,15 @@ namespace Tree
             }
             return PassList;
         }
+        /// <summary>
+        /// Pre order type pass method
+        /// </summary>
+        /// <param name="Node">Leaf to start pass from</param>
+        /// <param name="PassList">
+        /// <para>Final list of tree leafs</para>
+        /// <para>Should be null on method call</para>
+        /// </param>
+        /// <returns>List of tree leafs</returns>
         private List<BinaryTreeNode<T>> PreOrderPass(BinaryTreeNode<T> Node, List<BinaryTreeNode<T>> PassList = null)
         {
             if (PassList == null) PassList = new List<BinaryTreeNode<T>>();
@@ -271,6 +493,15 @@ namespace Tree
             }
             return PassList;
         }
+        /// <summary>
+        /// Hybrid order type pass method
+        /// </summary>
+        /// <param name="Node">Leaf to start pass from</param>
+        /// <param name="PassList">
+        /// <para>Final list of tree leafs</para>
+        /// <para>Should be null on method call</para>
+        /// </param>
+        /// <returns>List of tree leafs</returns>
         private List<BinaryTreeNode<T>> HybridOrderPass(BinaryTreeNode<T> Node, List<BinaryTreeNode<T>> PassList = null)
         {
             if (PassList == null) PassList = new List<BinaryTreeNode<T>>();
@@ -282,6 +513,13 @@ namespace Tree
             }
             return PassList;
         }
+        #endregion
+        #region Service
+        /// <summary>
+        /// Tree to string converter
+        /// </summary>
+        /// <param name="stringFormat">Format of output string</param>
+        /// <returns>String representation of tree</returns>
         public string ToString(StringFormat stringFormat = StringFormat.SingleLine)
         {
             var tempStr = String.Empty;
@@ -301,10 +539,21 @@ namespace Tree
             }
             return tempStr.Trim(' ');
         }
+        /// <summary>
+        /// Object existing checker
+        /// </summary>
+        /// <param name="Object">Object of tree</param>
+        /// <returns><c>true</c> if object exists in tree and <c>false</c> otherwise</returns>
+        public bool IsItemExist(T Object) => SortedPassList.Contains(Object);
+        /// <summary>
+        /// Basic tree to string converter
+        /// </summary>
+        /// <returns>String representation of tree</returns>
         public override string ToString() => ToString(StringFormat.Indented);
-
+        #endregion
+        #region Interfaces
         public IEnumerator<T> GetEnumerator() => SortedPassList.GetEnumerator();
-
         IEnumerator IEnumerable.GetEnumerator() => SortedPassList.GetEnumerator();
+        #endregion
     }
 }
